@@ -10,6 +10,15 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+
+    public function _error($e)
+    {
+        $this->response = [
+            'message' => $e->getMessage() . ' in file :' . $e->getFile() . ' line: ' . $e->getLine()
+        ];
+        return view('errors.message', ['message' => $this->response]);
+    }
+
     public function login(Request $request)
     {
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
@@ -22,9 +31,9 @@ class AuthController extends Controller
                     'name' => $user->name
                 ],
             ];
-            return response()->json(["code" => 200, "message" => "login successfull", "data" => $data]);
+            return response()->json(["message" => "login successfull", "data" => $data]);
         } else {
-            return response()->json(["code" => 404, "message" => "user not found"]);
+            return response()->json(["message" => "login failed"]);
         }
     }
 
@@ -35,12 +44,13 @@ class AuthController extends Controller
             $model['password'] = Hash::make($model['password']);
             $data = User::create($model);
             if ($data) {
-                return response()->json(["code" => 201, "message" => "register successfull", "data" => $data]);
+                return response()->json(["message" => "register successfull", "data" => $data]);
             } else {
-                return response()->json(["code" => 422, "message" => "register failed"]);
+                return response()->json(["message" => "register failed"]);
             }
         } catch (\Exception $e) {
-            return response()->json(["code" => 500, "message" => "errors"]);
+            $this->response['message'] = $e->getMessage() . ' in file :' . $e->getFile() . ' line: ' . $e->getLine();
+            return response()->json($this->response);
         }
     }
 
@@ -51,7 +61,8 @@ class AuthController extends Controller
             $user->revoke();
             return response()->json("successfull logged out");
         } catch (\Exception $e) {
-            return response()->json("error");
+            $this->response['message'] = $e->getMessage() . ' in file :' . $e->getFile() . ' line: ' . $e->getLine();
+            return response()->json($this->response);
         }
     }
 
@@ -59,9 +70,10 @@ class AuthController extends Controller
     {
         try {
             $user = Auth::user();
-            return response()->json(["code" => 200, "data" => $user]);
+            return response()->json(["data" => $user]);
         } catch (\Exception $e) {
-            return response()->json("error");
+            $this->response['message'] = $e->getMessage() . ' in file :' . $e->getFile() . ' line: ' . $e->getLine();
+            return response()->json($this->response);
         }
     }
 }
