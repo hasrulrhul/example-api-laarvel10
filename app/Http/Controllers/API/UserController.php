@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequests;
+use App\Http\Resources\UserResource;
 use App\Http\Services\Repositories\Contracts\UserContract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -33,7 +35,7 @@ class UserController extends Controller
             $data = $this->repo->paginated($r->all());
             return response()->json([
                 "message" => "list of users",
-                "data"       => $data,
+                "data"    => $data,
             ]);
         } catch (\Exception $e) {
             $this->response['message'] = $e->getMessage() . ' in file :' . $e->getFile() . ' line: ' . $e->getLine();
@@ -41,7 +43,7 @@ class UserController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(UserRequests $request)
     {
         try {
             $req = $request->all();
@@ -62,7 +64,7 @@ class UserController extends Controller
             $data = $this->repo->find($id);
             return response()->json([
                 "message" => "detail of users",
-                "data"       => $data,
+                "data"    => new UserResource($data),
             ]);
         } catch (\Exception $e) {
             $message = $e->getMessage() . ' in file :' . $e->getFile() . ' line: ' . $e->getLine();
@@ -70,14 +72,12 @@ class UserController extends Controller
         }
     }
 
-    public function update(Request $r)
+    public function update(UserRequests $r)
     {
         try {
             $req = $r->all();
             if (isset($req['password']) && $req['password'] != "") {
                 $req['password'] = Hash::make($req['password']);
-                // } else {
-                //     $req['warga_negara'] = $req['asal_negara'];
             }
             $this->repo->update($req, $r->id);
             return response()->json([
